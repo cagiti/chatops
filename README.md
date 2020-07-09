@@ -1,1 +1,1 @@
-# chatops-actions
+# chatops
