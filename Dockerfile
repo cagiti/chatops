@@ -9,7 +9,12 @@ COPY . .
 ENV GO111MODULE=on
 
 # Compile the action
-RUN go build -o /bin/action
+RUN go build -o /bin/action main.go && \
+        chmod 755 /bin/action
+
+FROM scratch
+
+COPY --from=0 /bin/action /action
 
 # Specify the container's entrypoint as the action
-ENTRYPOINT ["/bin/action"]
+ENTRYPOINT ["/action"]
