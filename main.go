@@ -1,4 +1,4 @@
-package chatops_actions
+package main
 
 import "github.com/sethvargo/go-githubactions"
 
