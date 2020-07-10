@@ -49,3 +49,6 @@ clean:
 
 modtidy:
 	$(GO) mod tidy
+
+test:
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) test -coverprofile=coverage.out $(PACKAGE_DIRS)
