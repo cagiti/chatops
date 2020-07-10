@@ -1,7 +1,7 @@
 name: ChatOps
 inputs:
   secrets:
-    fruit: Name of fruit to mask
+    token: github token
     required: true
 
 runs:
