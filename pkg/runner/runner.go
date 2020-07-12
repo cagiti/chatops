@@ -27,27 +27,27 @@ func New(ctx *context.Context, ghClient *gh.Client) Runner {
 
 func (runner *Runner) Run() error {
 
-	number, err := github.GetIssueOrPRNumber()
+	number, updatedAt, err := github.GetGitHubEventDetails()
 	if err != nil {
-		log.Logger().Error(err, "error whilst retrieving issue/pr number")
+		log.Logger().Error(err, "error whilst retrieving event details")
+		return err
 	}
 
-	repo := github.GetRepositoryInfo()
-	comments, _, err := runner.ghClient.Issues.ListComments(*runner.ctx, repo.Owner, repo.Name, number, nil)
+	comment, err := github.GetLastCommentForEvent(*runner.ctx, runner.ghClient, number, updatedAt)
 	if err != nil {
 		return err
 	}
 
-	for _, comment := range comments {
-		if strings.Contains(strings.ToLower(comment.GetBody()), "/woof") {
-			//TODO: send dog image
-			prComment := &gh.PullRequestComment{Body: gh.String("woof woof woof")}
-			_, resp, err := runner.ghClient.PullRequests.CreateComment(*runner.ctx, repo.Owner, repo.Name, number, prComment)
-			defer resp.Body.Close()
-			if err != nil {
-				return errors.Wrapf(err, "when posting a comment to #%d", number)
-			}
+	if strings.Contains(strings.ToLower(comment), "/bark") {
+		repo := github.GetRepositoryInfo()
+		log.Logger().Info("contains a bark")
+		issueComment := &gh.IssueComment{Body: gh.String("woof woof")}
+		_, resp, err := runner.ghClient.Issues.CreateComment(*runner.ctx, repo.Owner, repo.Name, number, issueComment)
+		defer resp.Body.Close()
+		if err != nil {
+			return errors.Wrapf(err, "when posting a comment to #%d", number)
 		}
 	}
+
 	return nil
 }

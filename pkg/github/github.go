@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/jenkins-x/jx-logging/pkg/log"
@@ -13,24 +14,25 @@ import (
 )
 
 var (
-	githubRef        = os.Getenv("GITHUB_REF")
-	githubEventName  = os.Getenv("GITHUB_EVENT_NAME")
 	githubRepository = os.Getenv("GITHUB_REPOSITORY")
 )
 
 const (
 	githubEventPath = "GITHUB_EVENT_PATH"
 	forwardSlash    = "/"
+	timestampFormat = "2006-01-02T15:04:05Z"
 )
 
 // Issue entity.
 type Issue struct {
-	Number int `json:"number"`
+	Number    int    `json:"number"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 // PullRequest entity.
 type PullRequest struct {
-	Number int `json:"number"`
+	Number    int    `json:"number"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 // Event entity.
@@ -65,7 +67,26 @@ func GetRepositoryInfo() Repository {
 	return Repository{}
 }
 
-// GetGitHubEvent using the GITHUB_EVENT_PATH environment variable.
+// GetGitHubEventDetails retrieves the events details
+func GetGitHubEventDetails() (int, time.Time, error) {
+	log.Logger().Info("getting github event details")
+	event, err := getGitHubEvent()
+	if err != nil {
+		return 0, time.Time{}, errors.Wrap(err, "when getting github event")
+	}
+	log.Logger().Infof("Event: %v", event)
+	number, err := getIssuePRNumber(event)
+	if err != nil {
+		return 0, time.Time{}, errors.Wrap(err, "when getting github issue/pr number")
+	}
+
+	updatedAt, err := getIssuePRUpdatedAtTime(event)
+	if err != nil {
+		return 0, time.Time{}, errors.Wrap(err, "when getting github issue/pr updatedAt time")
+	}
+
+	return number, updatedAt, nil
+}
 func getGitHubEvent() (*Event, error) {
 	log.Logger().Info("reading github event")
 	eventPath := os.Getenv(githubEventPath)
@@ -82,20 +103,49 @@ func getGitHubEvent() (*Event, error) {
 	}
 	return event, nil
 }
-func GetIssueOrPRNumber() (int, error) {
-	number := 0
-	event, err := getGitHubEvent()
-	if err != nil {
-		return number, errors.Wrap(err, "when getting getting github event")
-	}
-
-	number = event.Issue.Number
+func getIssuePRNumber(event *Event) (int, error) {
+	number := event.Issue.Number
 	if event.PullRequest.Number != 0 {
 		number = event.PullRequest.Number
 	}
 	if number == 0 {
 		return number, errors.New("unable to determine issue/pr number from event")
 	}
-
 	return number, nil
+}
+
+func getIssuePRUpdatedAtTime(event *Event) (time.Time, error) {
+	updatedAt := event.Issue.UpdatedAt
+	if event.PullRequest.UpdatedAt != "" {
+		updatedAt = event.PullRequest.UpdatedAt
+	}
+	if updatedAt == "" {
+		return time.Time{}, errors.New("unable to determine issue/pr updatedAt time from event")
+	}
+
+	updated, err := time.Parse(timestampFormat, updatedAt)
+	if err != nil {
+		return time.Time{}, errors.Wrapf(err, "parsing the updatedAt time")
+	}
+	return updated, nil
+}
+
+//GetLastCommentForEvent attempts to get the last comment for the triggered event
+func GetLastCommentForEvent(ctx context.Context, client *github.Client, number int, updatedAt time.Time) (string, error) {
+	var comment string
+	repo := GetRepositoryInfo()
+
+	comments, _, err := client.Issues.ListComments(ctx, repo.Owner, repo.Name, number, nil)
+	if err != nil {
+		return "", errors.Wrapf(err, "when retrieving comments")
+	}
+	// get latest comment for the current event - looping through latest first
+	for idx := len(comments) - 1; idx >= 0; idx-- {
+		if comments[idx].GetCreatedAt().Before(updatedAt) ||
+			comments[idx].GetCreatedAt().Equal(updatedAt) {
+			comment = comments[idx].GetBody()
+			break
+		}
+	}
+	return comment, nil
 }
