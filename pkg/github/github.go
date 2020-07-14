@@ -122,12 +122,20 @@ func getIssuePRUpdatedAtTime(event *Event) (time.Time, error) {
 	if updatedAt == "" {
 		return time.Time{}, errors.New("unable to determine issue/pr updatedAt time from event")
 	}
+	updatedAtTime, err := getTimestampFromString(updatedAt)
+	if err != nil {
+		return time.Time{}, errors.Wrapf(err, "when parsing time")
+	}
+	return updatedAtTime, nil
+}
 
-	updated, err := time.Parse(timestampFormat, updatedAt)
+func getTimestampFromString(stringTime string) (time.Time, error) {
+
+	timestamp, err := time.Parse(timestampFormat, stringTime)
 	if err != nil {
 		return time.Time{}, errors.Wrapf(err, "parsing the updatedAt time")
 	}
-	return updated, nil
+	return timestamp, nil
 }
 
 //GetLastCommentForEvent attempts to get the last comment for the triggered event
