@@ -25,6 +25,7 @@ func New(ctx *context.Context, ghClient *gh.Client) Runner {
 	}
 }
 
+// Run executes the action
 func (runner *Runner) Run() error {
 
 	number, updatedAt, err := github.GetGitHubEventDetails()
