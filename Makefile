@@ -2,9 +2,9 @@ SHELL := /bin/bash
 NAME := chatops
 GO := GO111MODULE=on GO15VENDOREXPERIMENT=1 go
 GO_NOMOD := GO111MODULE=off go
-PACKAGE_NAME := github.com/plumming/chatops-actions
-ROOT_PACKAGE := github.com/plumming/chatops-actions
-ORG := plumming
+PACKAGE_NAME := github.com/cagiti/chatops
+ROOT_PACKAGE := github.com/cagiti/chatops
+ORG := cagiti
 
 GO_VERSION := $(shell $(GO) version | sed -e 's/^[^0-9.]*\([0-9.]*\).*/\1/')
 PACKAGE_DIRS := $(shell $(GO) list ./... | grep -v /vendor/ | grep -v e2e)
@@ -21,7 +21,7 @@ export PATH := $(PATH):$(GOPATH1)/bin
 CLIENTSET_NAME_VERSIONED := v0.15.11
 
 build: $(GO_DEPENDENCIES)
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(BUILDTAGS) $(BUILDFLAGS) -o build/$(NAME) action/$(NAME)/$(NAME).go
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(BUILDTAGS) $(BUILDFLAGS) -o build/$(NAME) main.go
 
 docker:
 	docker build -t $(ORG)/$(NAME) .

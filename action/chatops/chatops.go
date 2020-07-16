@@ -1,4 +1,4 @@
-package main
+package chatops
 
 import (
 	"context"
@@ -15,7 +15,8 @@ const (
 	tokenValue = "token"
 )
 
-func main() {
+// Run the action
+func Run() {
 	// initialise logging
 	loghelper.InitLogrus()
 	ctx := context.Background()

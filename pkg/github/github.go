@@ -74,7 +74,6 @@ func GetGitHubEventDetails() (int, time.Time, error) {
 	if err != nil {
 		return 0, time.Time{}, errors.Wrap(err, "when getting github event")
 	}
-	log.Logger().Infof("Event: %v", event)
 	number, err := getIssuePRNumber(event)
 	if err != nil {
 		return 0, time.Time{}, errors.Wrap(err, "when getting github issue/pr number")
