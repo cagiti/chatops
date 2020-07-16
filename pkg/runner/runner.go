@@ -6,9 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/cagiti/chatops/pkg/github"
 	gh "github.com/google/go-github/v32/github"
 	"github.com/jenkins-x/jx-logging/pkg/log"
-	"github.com/plumming/chatops-actions/pkg/github"
 )
 
 // Runner struct containing context and the github client.
