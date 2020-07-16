@@ -41,7 +41,6 @@ func (runner *Runner) Run() error {
 
 	if strings.Contains(strings.ToLower(comment), "/bark") {
 		repo := github.GetRepositoryInfo()
-		log.Logger().Info("contains a bark")
 		issueComment := &gh.IssueComment{Body: gh.String("woof woof")}
 		_, resp, err := runner.ghClient.Issues.CreateComment(*runner.ctx, repo.Owner, repo.Name, number, issueComment)
 		defer resp.Body.Close()
